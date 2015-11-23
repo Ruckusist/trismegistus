@@ -1,0 +1,169 @@
+void WORKING() {
+	// --------- Gather the Sensor Data into an Array
+
+	/*
+	accelgyro.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+	sensors[2] = ax;
+	sensors[3] = ay;
+	sensors[4] = az;
+	sensors[5] = gx;
+	sensors[6] = gy;
+	sensors[7] = gz;
+	*/
+
+	mpuIntStatus = accelgyro.getIntStatus();
+
+	// get current FIFO count
+	fifoCount = accelgyro.getFIFOCount();
+
+	// check for overflow (this should never happen unless our code is too inefficient)
+	if ((mpuIntStatus & 0x10) || fifoCount == 1024) {
+		// reset so we can continue cleanly
+		accelgyro.resetFIFO();
+		printf("FIFO overflow!\n");
+
+		// otherwise, check for DMP data ready interrupt (this should happen frequently)
+	}
+	else if (mpuIntStatus & 0x02) {
+		//printf("accel gyro data good\n");
+		// wait for correct available data length, should be a VERY short wait
+		while (fifoCount < packetSize) fifoCount = accelgyro.getFIFOCount();
+
+		// read a packet from FIFO
+		accelgyro.getFIFOBytes(fifoBuffer, packetSize);
+
+		accelgyro.dmpGetQuaternion(&q, fifoBuffer);
+		accelgyro.dmpGetAccel(&aa, fifoBuffer);
+		accelgyro.dmpGetGravity(&gravity, &q);
+		accelgyro.dmpGetLinearAccel(&aaReal, &aa, &gravity);
+		accelgyro.dmpGetLinearAccelInWorld(&aaWorld, &aaReal, &q);
+
+		sensors[0] = analogRead(A0);
+		sensors[1] = sonar.ping_cm();
+		sensors[2] = aaReal.x;
+		sensors[3] = aaReal.y;
+		sensors[4] = aaReal.z;
+		sensors[5] = aaWorld.x;
+		sensors[6] = aaWorld.y;
+		sensors[7] = aaWorld.z;
+		sensors[8] = sonarRear.ping_cm();
+
+		// --------- Send The Sensor Data
+		Serial1.print(sensors[0]);
+		for (int i = 1; i < SENSORS_COUNT; i++) {
+			Serial1.print(F(","));
+			Serial1.print(sensors[i]);
+		}
+		Serial1.println();
+
+		/* -- TESTING --
+		for (int i = 0; i < SENSORS_COUNT; i++) {                           // this is unnecessary spewing into the Serial Port
+		  Serial.print(F(", "));                                // for debuging reasons i suppose... but it works...
+		  Serial.print(sensors[i]);                             // turn it off...
+		}
+		Serial.println();
+		*/
+
+		blinkState = !blinkState;
+		digitalWrite(b_led, blinkState);
+	}
+
+	// --------- Recieve and Pass the INPUT to the motors
+	if (Serial1.available() > 0) {
+		String line = Serial1.readStringUntil('\n');           // Input will be "-###,-###"
+		if (line != NULL) { // if line isnt null...
+			Serial.println(line);                                // DEBUG THE RECIVER.. now testing
+																 //motors_running(line);                              // more cleanly pass the input to another program
+			yblinkState = !yblinkState;                          // love this... totally worked first try...
+			digitalWrite(y_led, yblinkState);
+			// THis needs a new home...
+			int comma = line.indexOf(',');                       // comma seperator
+			if (comma > 0) {
+				int left = line.substring(0, comma).toInt();       // First line is nothing to comma will be LEFT_Motors
+				int right = line.substring(comma + 1).toInt();     // Second line is comma to the end will be RIGHT_Motors
+				if (left > 1) {
+					dcm1.backward(left);  // if LMotor speed is positive turn forward
+				}
+				else if (left < 1) {
+					dcm1.forward(-1 * left);  // if LMotor speed is Neg, Turn backward
+				}
+				else {
+					dcm1.breaking();  // If left is changing from front to back Break first
+				}
+				if (right > 1) {
+					dcm2.backward(right);  // if RMotor speed is positive turn forward
+				}
+				else if (right < 1) {
+					dcm2.forward(-1 * right);  // if RMotor speed is positive turn backward
+				}
+				else {
+					dcm2.breaking();  // If right is changing from front to back Break first
+				}
+			}
+		}
+	}
+}
+
+if (!(lcdText && newText.equals(lcdText)))
+                    {
+                        lcdText = newText;
+                        lcd.clear();
+                        lcd.home();
+                        lcd.print("I HEAR THE NODE");
+                        lcd.setCursor(0, 1); // second line
+                        lcd.print(lcdText);
+                    }
+                }
+
+1. 
+
+
+2.private Quaternion calibrationQuaternion;
+
+
+3. 
+
+
+4.// Used to calibrate the Input.acceleration
+
+
+5.void CalibrateAccelerometer()
+
+
+6.{
+
+
+7.    Vector3 accelerationSnapshot = Input.acceleration;
+
+
+8. 
+
+
+9.    Quaternion rotateQuaternion = Quaternion.FromToRotation(
+
+
+10.        new Vector3(0.0f, 0.0f, -1.0f), accelerationSnapshot);
+
+
+11. 
+
+
+12.    calibrationQuaternion = Quaternion.Inverse(rotateQuaternion);
+
+
+13.}
+
+
+14.    
+
+
+15.void Start(){CalibrateAccelerometer();}
+void Update().{    
+Vector3 theAcceleration = Input.acceleration;
+ Vector3 fixedAcceleration = calibrationQuaternion * theAcceleration;
+
+25.    // Use fixedAcceleration for any logic that follows
+}
+
+
+
