@@ -6,18 +6,8 @@ using System.Net;
 using System.Text;
 using System;
 
-public class NewComm : MonoBehaviour {
-
-    /*
-
-                                        ***ACHTUNG***
-
-        THIS CODE IS NOW OUT OF USE... PLEASE LOOK FOR NETWORKREC, AND NETWORKSEND....
-
-
-
-
-    */
+public class NewComm : MonoBehaviour
+{
 
     // CONFIGURATION
     public const int localUDPPort = 9977;
@@ -43,14 +33,17 @@ public class NewComm : MonoBehaviour {
     // INTERNAL STUFF
     UdpClient receiver;                         // Unity Built in UDP API stuff... 
     UdpClient sender;                           // Unity Built in UDP API stuff... 
-    IPEndPoint remoteIp = "192.168.2.172";      // Unity Built in UDP API stuff...  for send back -- Can this have a default setting?
+    IPEndPoint remoteIp;                        // Unity Built in UDP API stuff...  for send back
 
     //This Should run as a CoRoutine or as a Thread... more research needs doing 
     // this is the Looped per framerate function
-    void Update () {
-        if (receiver != null) {     // If everything is working... keep going
+    void Update()
+    {
+        if (receiver != null)
+        {     // If everything is working... keep going
 
-            try {                   // try { more notes}; 
+            try
+            {                   // try { more notes}; 
                 IPEndPoint anyIP = new IPEndPoint(IPAddress.Any, 0);
                 byte[] data = receiver.Receive(ref anyIP);
 
@@ -65,12 +58,13 @@ public class NewComm : MonoBehaviour {
             }
             catch (Exception err)
             {
-                ErrorControl.text = err.ToString();                       // this shouldnt happen... but when it does... its a huge long 3 line error... and is super helpful...
+                ErrorControl.text = err.ToString();                         // this shouldnt happen... but when it does... its a huge long 3 line error... and is super helpful...
             }
         }
     }
 
-    public void BeginEverything() {
+    public void BeginEverything()
+    {
         status.text = "opening UDP port";
 
         receiver = new UdpClient(localUDPPort);
@@ -79,7 +73,8 @@ public class NewComm : MonoBehaviour {
         status.text = "running";
     }
 
-    private void handleUDPData(string udp) {
+    private void handleUDPData(string udp)
+    {
         if (udp == null || udp.Length < 1) { return; }  // this never happens...
 
         String[] data = udp.Split(',');                 // this can be changed to better arange the data ... but ... this is fine...
@@ -88,15 +83,15 @@ public class NewComm : MonoBehaviour {
         {
             remoteIp = new IPEndPoint(IPAddress.Parse(data[0]), remoteUDPPort);
 
-            statusRemoteIP.text = "car IP: "  + data[0];
-            display1.text = "ping: "          + data[2];
-            display2.text = "dB level: "      + data[1]; 
+            statusRemoteIP.text = "car IP: " + data[0];
+            display1.text = "ping: " + data[1];
+            display2.text = "audio: " + data[2];
             display3.text = "Accel of x ::: " + data[3];
             display4.text = "Accel of y ::: " + data[4];
             display5.text = "Accel of z ::: " + data[5];
-            display6.text = "Gyro of x ::: "  + data[6];
-            display7.text = "Gyro of y ::: "  + data[7];
-            display8.text = "Gyro of z ::: "  + data[8];
+            display6.text = "Gyro of x ::: " + data[6];
+            display7.text = "Gyro of y ::: " + data[7];
+            display8.text = "Gyro of z ::: " + data[8];
         }
     }
 }

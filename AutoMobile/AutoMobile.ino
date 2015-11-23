@@ -41,18 +41,24 @@ the hope is that all the rest of the operational programming will sit in Unity.
 //#include "SoftwareSerial.h"      //  THis doesnt Exist
 //#include "tests.h"               // Backup of Clutter from old function tests... DO NOT DELETE
 //#include "RFCOMMS.h"             // This is a test of building Voids outside of this script
+#include <Wtv020sd16p.h>           // Audio chip (wtv020m01 1.0)
+#include <LiquidCrystal.h>         // LCD screen (LCM1602c v2.1)
 
 //DEFINE NAME      PINHOLE
 // --------------------------------- PINOUTs
-#define y_led         3            // these lights should maybe go somewhere else
-#define b_led         4            // and i should get a multi color light for debug purpose
-#define r_led         5
-#define g_led         6
+#define y_led        34            // these lights should maybe go somewhere else
+#define b_led        35            // and i should get a multi color light for debug purpose
+#define r_led        31
+#define g_led        29
 #define LED_PIN      13            // there are no calls for this... and thats okay too
 #define TRIGGER_PIN  12            // Arduino pin tied to trigger pin on the ultrasonic sensor.
 #define ECHO_PIN     11            // Arduino pin tied to echo pin on the ultrasonic sensor.
 #define TRIGGER_PIN_REAR  9        // Arduino pin tied to trigger pin on the ultrasonic sensor.
 #define ECHO_PIN_REAR     8        // Arduino pin tied to echo pin on the ultrasonic sensor.
+// FIXME: not using multi-led just yet...
+#define MULTI_LED_1  a8
+#define MULTI_LED_2  a9
+#define MULTI_LED_3  a10
 
 //--------------------------------- NodeMPU 8266 ESP-12E Wifi (Connected)
 //#define RxD        19          // Software Serial Wifi recieve -- no more softserial... i guess
@@ -110,6 +116,40 @@ bool yblinkState = false;
 
 #define TXMIT_DELAY  100
 
+// --------------------------------- Audio player
+int resetPin = 24; // The pin number of the reset pin. 
+//Connect to RST pin of evaluation board. This connects to Pin 1 in wtv020sd-16P module. 
+
+int clockPin = 25; // The pin number of the clock pin. 
+//Connect to P04 pin of evaluation board. This connects to Pin 7 in wtv020sd-16P module
+
+int dataPin = 26; // The pin number of the data pin.
+//Connect to P05 pin of evaluation board. This connects to Pin 10 in wtv020sd-16P module.
+
+int busyPin = 27; // The pin number of the busy pin.
+//Connect to P06 pin of evaluation board. This connects to Pin 15 in wtv020sd-16P module.
+/*
+Create an instance of the Wtv020sd16p class.
+1st parameter: Reset pin number.
+2nd parameter: Clock pin number.
+3rd parameter: Data pin number.
+4th parameter: Busy pin number.
+*/
+Wtv020sd16p audio(resetPin,clockPin,dataPin,busyPin);
+
+
+// --------------------------------- LCD
+// initialize the library with the numbers of the interface pins
+#define LCD_PIN_14      22
+#define LCD_PIN_13      3
+#define LCD_PIN_12      4
+#define LCD_PIN_11      5
+#define LCD_PIN_6       6
+#define LCD_PIN_4       7
+LiquidCrystal lcd(LCD_PIN_4, LCD_PIN_6, LCD_PIN_11, LCD_PIN_12, LCD_PIN_13, LCD_PIN_14);
+String lcdText;
+
+
 // --------------------------------- SETUP devices
 NewPing sonar(TRIGGER_PIN, ECHO_PIN, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
 NewPing sonarRear(TRIGGER_PIN_REAR, ECHO_PIN_REAR, MAX_DISTANCE); // NewPing setup of pins and maximum distance.
@@ -154,10 +194,15 @@ void setup() {
 	printf("\n\r::          Debug Mode             ::\n\r");
 	// BLUETOOTH (WIFI - Connected)
 	Serial1.begin(9600);                                  // Wifi Commz are good to 921000 baudz
-														  //Serial1.listen();                                     // This isnt a thing anymore... i cant say WTF...
 
-														  // --------------------------------- nRf24L01 setup (Disconnected)
+        printf("\n\r\::   LCD DISPLAY   ::\n\r");
+        lcd.begin(16, 2); // 16 x 2 display
+        lcd.print("SERIAL READY");
+
+        // --------------------------------- nRf24L01 setup (Disconnected)
 	printf("\n\r::   STARTING RADIO  ::\n\r");
+        lcd.clear();
+        lcd.print("STARTING RADIO");
 	radio.begin();
 	radio.enableDynamicPayloads();
 	radio.setRetries(15, 15);
@@ -168,6 +213,8 @@ void setup() {
 
 	// --------------------------------- MPU 6050 setup (FIX THESE OFFSETS!!)
 	printf("\n\r::   STARTING MPU  ::\n\r");
+        lcd.clear();
+        lcd.print("STARTING MCU");
 	accelgyro.initialize();
 	if (accelgyro.testConnection()) {
 		printf("MPU test connection successful\n");
@@ -177,6 +224,8 @@ void setup() {
 		printf("MPU test connection FAILED\n");
 	}
 	printf("DMP initialize...\n");
+        lcd.clear();
+        lcd.print("DMP initialize...");
 	devStatus = accelgyro.dmpInitialize();
 	accelgyro.setXGyroOffset(220);     // all these settings are FUCKED -- came at 220
 	accelgyro.setYGyroOffset(76);      // -- came at 76
@@ -186,15 +235,22 @@ void setup() {
 	if (devStatus == 0)
 	{
 		printf("Enabling DMP...\n");
+                lcd.clear();
+                lcd.print("Enabling DMP...");
 		accelgyro.setDMPEnabled(true);
 
 
 		printf("Attaching DMP interrupt...\n");
+                lcd.clear();
+                lcd.print("DMP int attach");
+
 		attachInterrupt(0, dmpDataReady, RISING);
 
 		mpuIntStatus = accelgyro.getIntStatus();
 
 		printf("DMP ready!\n");
+                lcd.clear();
+                lcd.print("DMP READY");
 
 		// get expected DMP packet size for later comparison
 		packetSize = accelgyro.dmpGetFIFOPacketSize();
@@ -202,11 +258,23 @@ void setup() {
 	else
 	{
 		printf("DMP initialization failed: ");
+                lcd.clear();
+                lcd.print("DMP init failed!");
 		Serial.print(devStatus);
 		printf("\n");
 	}
 
+        // FIXME: not working yet (need 512MB or 1GB SD card max)
+        printf("\n\r\::   STARTUP SOUND: 0000.AD4   ::\n\r");
+        
+        lcd.clear();
+        lcd.print("STARTUP SOUND");
+        audio.asyncPlayVoice(0); // plays song 0, 0000.AD4
+
+  
 	printf("\n\r::   BEGIN  ::\n\r");
+        lcd.clear();
+        lcd.print("HELLO MICHAEL");
 	delay(2500);
 	//startMenu();
 }
@@ -289,7 +357,7 @@ void WORKING() {
 
 	// --------- Recieve and Pass the INPUT to the motors
 	if (Serial1.available() > 0) {
-		String line = Serial1.readStringUntil('\n');           // Input will be "-###,-###"
+		String line = Serial1.readStringUntil('\n');           // Input will be "-###,-###,XXX" where ### is drive values and XXX is LCD display text
 		if (line != NULL) { // if line isnt null...
 			Serial.println(line);                                // DEBUG THE RECIVER.. now testing
 																 //motors_running(line);                              // more cleanly pass the input to another program
@@ -298,8 +366,13 @@ void WORKING() {
 			// THis needs a new home...
 			int comma = line.indexOf(',');                       // comma seperator
 			if (comma > 0) {
-				int left = line.substring(0, comma).toInt();       // First line is nothing to comma will be LEFT_Motors
-				int right = line.substring(comma + 1).toInt();     // Second line is comma to the end will be RIGHT_Motors
+                                int comma2 = line.indexOf(',', comma+1);
+                                
+                                // First line is nothing to comma will be LEFT_Motors
+				int left = line.substring(0, comma).toInt();       
+
+                                // Second line is comma to comma2/end will be RIGHT_Motors
+				int right = comma2>comma ? line.substring(comma + 1, comma2).toInt() : line.substring(comma + 1).toInt();     
 				if (left > 1) {
 					dcm1.backward(left);  // if LMotor speed is positive turn forward
 				}
@@ -318,6 +391,20 @@ void WORKING() {
 				else {
 					dcm2.breaking();  // If right is changing from front to back Break first
 				}
+
+                                // lcd data
+                                if (comma2 > 0) {
+                                        String newText = line.substring(comma2 + 1);
+                                        if (!(lcdText && newText.equals(lcdText)))
+                                        {
+                                          lcdText = newText;
+                                          lcd.clear();
+                                          lcd.home();
+                                          lcd.print("I HEAR YOU...");
+                                          lcd.setCursor(0, 1); // second line
+                                          lcd.print(lcdText);
+                                        }
+                                }
 			}
 		}
 	}

@@ -3,8 +3,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class NewMainPgm : MonoBehaviour
-{
+public class NewMainPgm : MonoBehaviour {
 
     private IEnumerator coroutine;
 
@@ -13,7 +12,7 @@ public class NewMainPgm : MonoBehaviour
     public Text ErrorControl;                   // All Errors in One Place
     public Text RawDataStream;                  // DeBug Output stream of Data right off the tap
 
-
+    
     public string message = "";
     // Use this for initialization
     void Start()
@@ -21,23 +20,20 @@ public class NewMainPgm : MonoBehaviour
     }
 
     // Update is called once per frame
-    void Update()
-    {
+    void Update() {
         if (Input.GetKeyDown("space"))
         {
             coroutine = TESTGOCoroutine1();
             StartCoroutine(coroutine);
         }
     }
+    
 
-
-    public IEnumerator TESTGOCoroutine1()
-    {
-        while (true)
-        {
+    public IEnumerator TESTGOCoroutine1() {
+        while (true) {
             try
             {
-                //NetworkSend.message = "255,255";           // this is not the right call
+               //NetworkSend.message = "255,255";           // this is not the right call
             }
             catch (Exception err)
             {
@@ -49,16 +45,12 @@ public class NewMainPgm : MonoBehaviour
         }
     }
 
-    public IEnumerator TESTGOCoroutine2()
-    {
-        while (true)
-        {
-            try
-            {
+    public IEnumerator TESTGOCoroutine2() {
+        while (true) {
+            try {
                 //NetworkSend.message = "-255,-255";           // this is not the right call
             }
-            catch (Exception err)
-            {
+            catch (Exception err) {
                 print(err.ToString());
                 ErrorControl.text = err.ToString();
             }
@@ -67,4 +59,4 @@ public class NewMainPgm : MonoBehaviour
         }
     }
 }
-
+    
