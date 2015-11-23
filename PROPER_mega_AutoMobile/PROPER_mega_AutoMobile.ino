@@ -6,17 +6,18 @@
 #include "AutoMobile.h"
 #include "Wire.h"
 #include "LiquidCrystal.h"
+#include "artofcircuits_l298n.h"   // Drive commands
 
-void setup()
-{
+AutoMobile Automobile;
 
+void setup() {
+	
   /* add setup code here */
 
 }
 
-void loop()
-{
-
+void loop() {
+	Automobile.loop();
   /* add main program code here */
 
 }

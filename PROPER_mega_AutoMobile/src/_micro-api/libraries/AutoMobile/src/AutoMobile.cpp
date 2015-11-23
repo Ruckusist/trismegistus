@@ -8,6 +8,9 @@
 #include "AMDrive.h"
 
 
+AutoMobile::AutoMobile() {
+	setup();
+}
 
 void AutoMobile::setup() {
 	Serial.begin(SERIAL_USB_BAUD); delay(100);    // Open serial monitor at 115200 baud to see ping results
@@ -87,25 +90,29 @@ bool AutoMobile::select(HardwareSerial& serial) {
 			String data = (comma > 0) ? line.substring(comma + 1) : "";
 
 			switch (cmd) {
-				/*
+				
 			case 1: // drive
 				Serial.println("driving: " + data);
-				drive(data);
+				lcd.print("GOGO: ");
+				lcd.print(data);
+				drive.Drive(data);
 				break;
-
-			case 2: // LCD on/off
-				lcdToggle(Serial, true);
+				
+			case 2: // Drive Ramping 
+				Serial.println("driving: " + data);
+				lcd.print("GOGO: ");
+				lcd.print(data);
+				drive.Catch(data);
 				break;
 
 			case 3: // LCD text
-				lcdText(data);
+				lcd.print(data);
 				break;
 
 			case 4: // Node send
 				Serial.println("Sending data to Node...");
-				sendToNode(data);
+				Serial2.println(data);
 				break;
-				*/
 
 			case 5: // Bluetooth send
 				sendToBluetooth(serial, data);

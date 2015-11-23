@@ -42,6 +42,9 @@
     <ClInclude Include="src\_micro-api\libraries\AMAccelGyro\src\AMAccelGyro.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="src\_micro-api\libraries\PixLed\src\PixLed.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\_micro-api\libraries\Testies\src\Testies.cpp">
@@ -63,6 +66,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\_micro-api\libraries\AMAccelGyro\src\AMAccelGyro.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\_micro-api\libraries\PixLed\src\PixLed.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

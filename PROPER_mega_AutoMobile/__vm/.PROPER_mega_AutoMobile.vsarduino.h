@@ -96,6 +96,8 @@ extern "C" void __cxa_pure_virtual() {;}
 #include <AutoMobile.h>
 #include <DEFINITIONS.cpp>
 #include <DEFINITIONS.h>
+#include <PixLed.cpp>
+#include <PixLed.h>
 #include <Testies.cpp>
 #include <Testies.h>
 #endif

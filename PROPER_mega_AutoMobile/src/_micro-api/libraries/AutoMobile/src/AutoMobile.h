@@ -12,16 +12,14 @@
 class AutoMobile {
 
 protected:
-
+	AMDrive drive;
 	AMLED green;
 	AMLED red;
 	AMLED blue;
 	AMLED yellow;
-
 	AMLCD lcd;
-
-
 	AMAccelGyro accelGyro;
+
 	HardwareSerial* sensor3Serial;
 	bool sensorsEnabled = false;
 //	bool sensors2Enabled = false;
@@ -32,6 +30,7 @@ protected:
 	void sendToBluetooth(HardwareSerial& serial, String data);
 
 public:
+	AutoMobile();
 	void setup();
 	void loop();
 };
